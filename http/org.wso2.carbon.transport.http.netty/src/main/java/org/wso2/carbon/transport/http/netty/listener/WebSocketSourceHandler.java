@@ -21,6 +21,7 @@ package org.wso2.carbon.transport.http.netty.listener;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
@@ -32,6 +33,7 @@ import org.wso2.carbon.messaging.BinaryCarbonMessage;
 import org.wso2.carbon.messaging.CarbonMessage;
 import org.wso2.carbon.messaging.CarbonMessageProcessor;
 import org.wso2.carbon.messaging.ControlCarbonMessage;
+import org.wso2.carbon.messaging.Header;
 import org.wso2.carbon.messaging.StatusCarbonMessage;
 import org.wso2.carbon.messaging.TextCarbonMessage;
 import org.wso2.carbon.transport.http.netty.common.Constants;
@@ -43,6 +45,7 @@ import org.wso2.carbon.transport.http.netty.sender.channel.pool.ConnectionManage
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.List;
 import javax.websocket.Session;
 
 /**
@@ -56,6 +59,7 @@ public class WebSocketSourceHandler extends SourceHandler {
     private CarbonMessage cMsg;
     private final String channelId;
     private final boolean isSecured;
+    private final List<Header> headers;
 
     /**
      * @param channelId This works as the session id of the WebSocket connection.
@@ -65,16 +69,14 @@ public class WebSocketSourceHandler extends SourceHandler {
      * @param isSecured indication of whether the connection is secured or not.
      * @param ctx {@link ChannelHandlerContext} of WebSocket connection.
      */
-    public WebSocketSourceHandler(String channelId,
-                                  ConnectionManager connectionManager,
-                                  ListenerConfiguration listenerConfiguration,
-                                  String uri,
-                                  boolean isSecured,
-                                  ChannelHandlerContext ctx) throws Exception {
+    public WebSocketSourceHandler(String channelId, ConnectionManager connectionManager,
+                                  ListenerConfiguration listenerConfiguration, String uri, boolean isSecured,
+                                  ChannelHandlerContext ctx, List<Header> headers) throws Exception {
         super(connectionManager, listenerConfiguration);
         this.uri = uri;
         this.channelId = channelId;
         this.isSecured = isSecured;
+        this.headers = headers;
         sendOnOpenMessage(ctx, isSecured, uri);
     }
 
@@ -85,6 +87,7 @@ public class WebSocketSourceHandler extends SourceHandler {
             logger.error("Expecting WebSocketFrame. Unknown type.");
             throw new UnknownWebSocketFrameTypeException("Expecting WebSocketFrame. Unknown type.");
         }
+
         if (msg instanceof TextWebSocketFrame) {
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) msg;
             String text = textWebSocketFrame.text();
@@ -119,7 +122,6 @@ public class WebSocketSourceHandler extends SourceHandler {
             ByteBuffer byteBuffer = byteBuf.nioBuffer();
             cMsg = new ControlCarbonMessage(byteBuffer, finalFragment);
             setupCarbonMessage(ctx);
-
         }
         publishToMessageProcessor(cMsg);
     }
@@ -134,7 +136,6 @@ public class WebSocketSourceHandler extends SourceHandler {
         if (HTTPTransportContextHolder.getInstance().getHandlerExecutor() != null) {
             HTTPTransportContextHolder.getInstance().getHandlerExecutor().executeAtSourceRequestReceiving(cMsg);
         }
-
         CarbonMessageProcessor carbonMessageProcessor = HTTPTransportContextHolder.getInstance()
                 .getMessageProcessor();
         if (carbonMessageProcessor != null) {
@@ -187,6 +188,7 @@ public class WebSocketSourceHandler extends SourceHandler {
         cMsg.setProperty(Constants.REMOTE_PORT, ((InetSocketAddress) ctx.channel().remoteAddress()).getPort());
         cMsg.setProperty(Constants.CHANNEL_ID, channelId);
         cMsg.setProperty(Constants.PROTOCOL, Constants.WEBSOCKET_PROTOCOL);
+        cMsg.setHeaders(headers);
         Session session = WebSocketSessionManager.getInstance().getSession(uri, channelId);
         cMsg.setProperty(Constants.WEBSOCKET_SESSION, session);
     }

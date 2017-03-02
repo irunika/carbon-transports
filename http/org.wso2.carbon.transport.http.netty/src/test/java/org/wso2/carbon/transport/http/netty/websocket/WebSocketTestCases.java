@@ -47,9 +47,17 @@ import static org.testng.AssertJUnit.assertTrue;
 public class WebSocketTestCases {
 
     Logger logger = LoggerFactory.getLogger(WebSocketTestCases.class);
+
+    private final String host = "localhost";
+    private final int port = 8080;
+    private final String subprotocol = "json";
+    private final boolean allowExtensions = true;
+
+    private String url = System.getProperty("url", String.format("ws://%s:%d/%s",
+                                                                 host, port, "test"));
     private List<HTTPServerConnector> serverConnectors;
-    private WebSocketClient primaryClient = new WebSocketClient();
-    private WebSocketClient secondaryClient = new WebSocketClient();
+    private WebSocketClient primaryClient = new WebSocketClient(url);
+    private WebSocketClient secondaryClient = new WebSocketClient(url);
 
     @BeforeClass
     public void setup() {
@@ -62,7 +70,7 @@ public class WebSocketTestCases {
     @Test
     public void handshakeTest() throws URISyntaxException, SSLException {
         try {
-            assertTrue(primaryClient.handhshake());
+            assertTrue(primaryClient.handhshake(subprotocol, allowExtensions));
             logger.info("Handshake test completed.");
         } catch (InterruptedException e) {
             logger.error("Handshake interruption.");
@@ -72,7 +80,7 @@ public class WebSocketTestCases {
 
     @Test
     public void testText() throws URISyntaxException, InterruptedException, SSLException {
-        primaryClient.handhshake();
+        primaryClient.handhshake(subprotocol, allowExtensions);
         String textSent = "test";
         primaryClient.sendText(textSent);
         Thread.sleep(3000);
@@ -84,7 +92,7 @@ public class WebSocketTestCases {
 
     @Test
     public void testBinary() throws InterruptedException, URISyntaxException, SSLException {
-        primaryClient.handhshake();
+        primaryClient.handhshake(subprotocol, allowExtensions);
         byte[] bytes = {1, 2, 3, 4, 5};
         ByteBuffer bufferSent = ByteBuffer.wrap(bytes);
         primaryClient.sendBinary(bufferSent);
@@ -104,9 +112,9 @@ public class WebSocketTestCases {
      */
     @Test
     public void testClientConnected() throws InterruptedException, SSLException, URISyntaxException {
-        primaryClient.handhshake();
+        primaryClient.handhshake(subprotocol, allowExtensions);
         Thread.sleep(2000);
-        secondaryClient.handhshake();
+        secondaryClient.handhshake(subprotocol, allowExtensions);
         Thread.sleep(5000);
         String textReceived = primaryClient.getTextReceived();
         logger.info("Received text : " + textReceived);
@@ -124,9 +132,9 @@ public class WebSocketTestCases {
      */
     @Test
     public void testClientCloseConnection() throws InterruptedException, URISyntaxException, SSLException {
-        primaryClient.handhshake();
+        primaryClient.handhshake(subprotocol, allowExtensions);
         Thread.sleep(2000);
-        secondaryClient.handhshake();
+        secondaryClient.handhshake(subprotocol, allowExtensions);
         Thread.sleep(3000);
         secondaryClient.shutDown();
         Thread.sleep(3000);
@@ -140,7 +148,7 @@ public class WebSocketTestCases {
 
     @Test
     public void testPongMessage() throws InterruptedException, SSLException, URISyntaxException {
-        primaryClient.handhshake();
+        primaryClient.handhshake(subprotocol, allowExtensions);
         byte[] bytes = {6, 7, 8, 9, 10, 11};
         ByteBuffer bufferSent = ByteBuffer.wrap(bytes);
         primaryClient.sendPong(bufferSent);

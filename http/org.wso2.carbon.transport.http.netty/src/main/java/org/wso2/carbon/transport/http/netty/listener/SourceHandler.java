@@ -163,25 +163,24 @@ public class SourceHandler extends ChannelInboundHandlerAdapter {
     private void handleWebSocketHandshake(HttpRequest httpRequest) throws ProtocolException {
         try {
             WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
-                    getWebSocketURL(httpRequest), null, true);
+                    getWebSocketURL(httpRequest), "xml, json", true);
             handshaker = wsFactory.newHandshaker(httpRequest);
             handshaker.handshake(ctx.channel(), httpRequest);
+            String subprotocol = handshaker.selectedSubprotocol();
+            log.info("negotiated subprotocol : " + subprotocol);
             boolean isSecuredConnection = false;
             if (listenerConfiguration.getSslConfig() != null) {
                 isSecuredConnection = true;
             }
-
             //Replace HTTP handlers  with  new Handlers for WebSocket in the pipeline
             ChannelPipeline pipeline = ctx.pipeline();
             int maxThreads = PoolConfiguration.getInstance().getEventGroupExecutorThreads();
             EventExecutorGroup executorGroup = new DefaultEventExecutorGroup(maxThreads);
             pipeline.addLast(executorGroup, "ws_handler",
-                             new WebSocketSourceHandler(generateWebSocketChannelID(),
-                                                        this.connectionManager,
-                                                        this.listenerConfiguration,
-                                                        httpRequest.getUri(),
-                                                        isSecuredConnection,
-                                                        ctx));
+                             new WebSocketSourceHandler(generateWebSocketChannelID(), this.connectionManager,
+                                                        this.listenerConfiguration, httpRequest.getUri(),
+                                                        isSecuredConnection, ctx,
+                                                        Util.getHeaders(httpRequest).getAll()));
 
             pipeline.remove(this);
 
@@ -191,7 +190,6 @@ public class SourceHandler extends ChannelInboundHandlerAdapter {
             due to a protocol error.
              */
             ctx.channel().writeAndFlush(new CloseWebSocketFrame(1002, ""));
-
             ctx.close();
             throw new ProtocolException("Error occurred in HTTP to WebSocket Upgrade : " + e.getMessage());
         }

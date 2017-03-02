@@ -57,19 +57,21 @@ public class WebSocketClient {
 
     private static final Logger logger = LoggerFactory.getLogger(WebSocketClient.class);
 
-    private final String url = System.getProperty("url", String.format("ws://%s:%d/%s",
-                                                                TestUtil.TEST_HOST, 8490, "test"));
-
     private Channel channel = null;
     private WebSocketClientHandler handler;
-    EventLoopGroup group;
+    private EventLoopGroup group;
+    private final String url;
+
+    public WebSocketClient(String url) {
+        this.url = url;
+    }
 
     /**
      * @return true if the handshake is done properly.
      * @throws URISyntaxException throws if there is an error in the URI syntax.
      * @throws InterruptedException throws if the connecting the server is interrupted.
      */
-    public boolean handhshake() throws InterruptedException, URISyntaxException, SSLException {
+    public boolean handhshake(String subprotocol, boolean allowExtensions) throws InterruptedException, URISyntaxException, SSLException {
         boolean isDone = false;
         URI uri = new URI(url);
         String scheme = uri.getScheme() == null ? "ws" : uri.getScheme();
@@ -109,8 +111,8 @@ public class WebSocketClient {
             handler =
                     new WebSocketClientHandler(
                             WebSocketClientHandshakerFactory.newHandshaker(
-                                    uri, WebSocketVersion.V13, null,
-                                    true, new DefaultHttpHeaders()));
+                                    uri, WebSocketVersion.V13, subprotocol,
+                                    allowExtensions, new DefaultHttpHeaders()));
 
             Bootstrap b = new Bootstrap();
             b.group(group)
