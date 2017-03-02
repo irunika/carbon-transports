@@ -59,10 +59,12 @@ public class WebSocketMessageProcessor implements CarbonMessageProcessor {
             public void run() {
                 try {
                     String protocol = (String) carbonMessage.getProperty(Constants.PROTOCOL);
-
                     if (!Constants.WEBSOCKET_PROTOCOL.equals(protocol)) {
                         throw new ProtocolException("Protocol is not valid :" + protocol);
                     }
+
+                    Session session = (Session) carbonMessage.getProperty(Constants.WEBSOCKET_SESSION);
+                    logger.info("Negotiated subprotocol : " + session.getNegotiatedSubprotocol());
                     if (carbonMessage instanceof TextCarbonMessage) {
                         handleTextMessage(carbonMessage);
                     } else if (carbonMessage instanceof BinaryCarbonMessage) {

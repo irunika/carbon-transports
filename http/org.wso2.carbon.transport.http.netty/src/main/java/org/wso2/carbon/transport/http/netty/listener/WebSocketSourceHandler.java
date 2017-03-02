@@ -21,7 +21,6 @@ package org.wso2.carbon.transport.http.netty.listener;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
@@ -77,6 +76,11 @@ public class WebSocketSourceHandler extends SourceHandler {
         this.channelId = channelId;
         this.isSecured = isSecured;
         this.headers = headers;
+        if (logger.isDebugEnabled()) {
+            for (Header header : headers) {
+                logger.debug("headers -> " + header.getName() + ":" + header.getValue());
+            }
+        }
         sendOnOpenMessage(ctx, isSecured, uri);
     }
 
@@ -156,7 +160,7 @@ public class WebSocketSourceHandler extends SourceHandler {
      */
     private void sendOnOpenMessage(ChannelHandlerContext ctx, boolean isSecured, String uri) {
         cMsg = new StatusCarbonMessage(org.wso2.carbon.messaging.Constants.STATUS_OPEN, 0, null);
-        Session session = new WebSocketSessionImpl(ctx, isSecured, uri, channelId);
+        Session session = new WebSocketSessionImpl(ctx, isSecured, uri, channelId, getSubprotocol(headers));
         WebSocketSessionManager.getInstance().add(uri, session);
         setupCarbonMessage(ctx);
         cMsg.setProperty(Constants.CONNECTION, Constants.UPGRADE);
@@ -191,5 +195,18 @@ public class WebSocketSourceHandler extends SourceHandler {
         cMsg.setHeaders(headers);
         Session session = WebSocketSessionManager.getInstance().getSession(uri, channelId);
         cMsg.setProperty(Constants.WEBSOCKET_SESSION, session);
+    }
+
+    /*
+    Find the subprotocol which the handshaker negotiated.
+     */
+    private String getSubprotocol(List<Header> headers) {
+        String subprotocolHeaderKey = "sec-websocket-protocol";
+        for (Header header: headers) {
+            if (subprotocolHeaderKey.equals(header.getName())) {
+                return header.getValue();
+            }
+        }
+        return null;
     }
 }

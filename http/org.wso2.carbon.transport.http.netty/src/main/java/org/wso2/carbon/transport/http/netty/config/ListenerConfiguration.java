@@ -77,6 +77,12 @@ public class ListenerConfiguration {
     @XmlAttribute
     private String certPass;
 
+    @XmlAttribute
+    private String websocketSubprotocols = null;
+
+    @XmlAttribute
+    private boolean websocketAllowExtensions = true;
+
     @XmlElementWrapper(name = "parameters")
     @XmlElement(name = "parameter")
     private List<Parameter> parameters = getDefaultParameters();
@@ -168,6 +174,22 @@ public class ListenerConfiguration {
 
     public void setParameters(List<Parameter> parameters) {
         this.parameters = parameters;
+    }
+
+    public String getWebsocketSubprotocols() {
+        return websocketSubprotocols;
+    }
+
+    public void setWebsocketSubprotocols(String websocketSubprotocols) {
+        this.websocketSubprotocols = websocketSubprotocols;
+    }
+
+    public boolean isWebsocketAllowExtensions() {
+        return websocketAllowExtensions;
+    }
+
+    public void setWebsocketAllowExtensions(boolean websocketAllowExtensions) {
+        this.websocketAllowExtensions = websocketAllowExtensions;
     }
 
     public SSLConfig getSslConfig() {

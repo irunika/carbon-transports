@@ -163,11 +163,10 @@ public class SourceHandler extends ChannelInboundHandlerAdapter {
     private void handleWebSocketHandshake(HttpRequest httpRequest) throws ProtocolException {
         try {
             WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
-                    getWebSocketURL(httpRequest), "xml, json", true);
+                    getWebSocketURL(httpRequest), listenerConfiguration.getWebsocketSubprotocols(),
+                    listenerConfiguration.isWebsocketAllowExtensions());
             handshaker = wsFactory.newHandshaker(httpRequest);
             handshaker.handshake(ctx.channel(), httpRequest);
-            String subprotocol = handshaker.selectedSubprotocol();
-            log.info("negotiated subprotocol : " + subprotocol);
             boolean isSecuredConnection = false;
             if (listenerConfiguration.getSslConfig() != null) {
                 isSecuredConnection = true;

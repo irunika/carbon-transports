@@ -43,14 +43,16 @@ public class WebSocketSessionImpl extends WebSocketSessionAdapter {
     private final String requestedUri;
     private final String sessionId;
     private boolean isOpen;
+    private String subprotocol;
 
     public WebSocketSessionImpl(ChannelHandlerContext ctx, boolean isSecure,
-                                String requestedUri, String sessionId) {
+                                String requestedUri, String sessionId, String subprotocol) {
         this.ctx = ctx;
         this.isSecure = isSecure;
         this.requestedUri = requestedUri;
         this.sessionId = sessionId;
         this.isOpen = true;
+        this.subprotocol = subprotocol;
     }
 
     @Override
@@ -93,6 +95,11 @@ public class WebSocketSessionImpl extends WebSocketSessionAdapter {
     @Override
     public boolean isOpen() {
         return isOpen;
+    }
+
+    @Override
+    public String getNegotiatedSubprotocol() {
+        return subprotocol;
     }
 
     /**

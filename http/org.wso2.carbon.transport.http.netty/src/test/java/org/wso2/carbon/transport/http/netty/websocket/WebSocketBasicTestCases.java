@@ -19,8 +19,10 @@
 
 package org.wso2.carbon.transport.http.netty.websocket;
 
+import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -44,13 +46,15 @@ import static org.testng.AssertJUnit.assertTrue;
 /**
  * Test class for WebSocket Upgrade
  */
-public class WebSocketTestCases {
+public class WebSocketBasicTestCases {
 
-    Logger logger = LoggerFactory.getLogger(WebSocketTestCases.class);
+    Logger logger = LoggerFactory.getLogger(WebSocketBasicTestCases.class);
 
     private final String host = "localhost";
-    private final int port = 8080;
-    private final String subprotocol = "json";
+    private final int port = 8490;
+    private final String subprotocolJson = "json";
+    private final String subprotocolXML = "xml";
+    private final String subprotocolUnknown = "unknown";
     private final boolean allowExtensions = true;
 
     private String url = System.getProperty("url", String.format("ws://%s:%d/%s",
@@ -67,10 +71,10 @@ public class WebSocketTestCases {
         serverConnectors = TestUtil.startConnectors(configuration, new WebSocketMessageProcessor());
     }
 
-    @Test
+    @Test(description = "Test WebSocket handshake.")
     public void handshakeTest() throws URISyntaxException, SSLException {
         try {
-            assertTrue(primaryClient.handhshake(subprotocol, allowExtensions));
+            assertTrue(primaryClient.handhshake(null, true));
             logger.info("Handshake test completed.");
         } catch (InterruptedException e) {
             logger.error("Handshake interruption.");
@@ -78,9 +82,9 @@ public class WebSocketTestCases {
         }
     }
 
-    @Test
+    @Test(description = "Test WebSocket Test Message Delivery")
     public void testText() throws URISyntaxException, InterruptedException, SSLException {
-        primaryClient.handhshake(subprotocol, allowExtensions);
+        primaryClient.handhshake(null, true);
         String textSent = "test";
         primaryClient.sendText(textSent);
         Thread.sleep(3000);
@@ -90,9 +94,9 @@ public class WebSocketTestCases {
         primaryClient.shutDown();
     }
 
-    @Test
+    @Test(description = "Test WebSocket Binary Message Delivery")
     public void testBinary() throws InterruptedException, URISyntaxException, SSLException {
-        primaryClient.handhshake(subprotocol, allowExtensions);
+        primaryClient.handhshake(null, true);
         byte[] bytes = {1, 2, 3, 4, 5};
         ByteBuffer bufferSent = ByteBuffer.wrap(bytes);
         primaryClient.sendBinary(bufferSent);
@@ -110,11 +114,11 @@ public class WebSocketTestCases {
     When secondary server is connecting to the endpoint, message will be sent to the primary
     client indicating the state of the secondary client.
      */
-    @Test
+    @Test(description = "Test successful connection using two WebSocket clients.")
     public void testClientConnected() throws InterruptedException, SSLException, URISyntaxException {
-        primaryClient.handhshake(subprotocol, allowExtensions);
+        primaryClient.handhshake(null, true);
         Thread.sleep(2000);
-        secondaryClient.handhshake(subprotocol, allowExtensions);
+        secondaryClient.handhshake(null, true);
         Thread.sleep(5000);
         String textReceived = primaryClient.getTextReceived();
         logger.info("Received text : " + textReceived);
@@ -130,11 +134,11 @@ public class WebSocketTestCases {
     When secondary server is closing the connection, message will be sent to the primary
     client indicating the state of the secondary client.
      */
-    @Test
+    @Test(description = "Test successful disconnection using two WebSocket clients.")
     public void testClientCloseConnection() throws InterruptedException, URISyntaxException, SSLException {
-        primaryClient.handhshake(subprotocol, allowExtensions);
+        primaryClient.handhshake(null, true);
         Thread.sleep(2000);
-        secondaryClient.handhshake(subprotocol, allowExtensions);
+        secondaryClient.handhshake(null, true);
         Thread.sleep(3000);
         secondaryClient.shutDown();
         Thread.sleep(3000);
@@ -146,9 +150,9 @@ public class WebSocketTestCases {
         secondaryClient.shutDown();
     }
 
-    @Test
+    @Test(description = "Test WebSocket Pong Message Delivery.")
     public void testPongMessage() throws InterruptedException, SSLException, URISyntaxException {
-        primaryClient.handhshake(subprotocol, allowExtensions);
+        primaryClient.handhshake(null, true);
         byte[] bytes = {6, 7, 8, 9, 10, 11};
         ByteBuffer bufferSent = ByteBuffer.wrap(bytes);
         primaryClient.sendPong(bufferSent);
@@ -156,6 +160,21 @@ public class WebSocketTestCases {
         ByteBuffer bufferReceived = primaryClient.getBufferReceived();
         assertEquals("Didn't receive the correct pong.", bufferReceived, bufferSent);
         logger.info("Receiving a pong message is completed.");
+        primaryClient.shutDown();
+    }
+
+    @Test(description = "Test correct WebSocket subprotocol negotiation.")
+    public void testSubprotocolNegotiation() throws InterruptedException, SSLException, URISyntaxException {
+        String textSent = "subprotocol";
+        Assert.assertTrue(primaryClient.handhshake(subprotocolJson, allowExtensions));
+        Thread.sleep(2000);
+        Assert.assertTrue(secondaryClient.handhshake(subprotocolXML, allowExtensions));
+        secondaryClient.sendText(textSent);
+        Thread.sleep(2000);
+        String textReceived = secondaryClient.getTextReceived();
+        Assert.assertEquals(textReceived, textSent);
+        primaryClient.shutDown();
+        secondaryClient.shutDown();
     }
 
     @AfterClass
