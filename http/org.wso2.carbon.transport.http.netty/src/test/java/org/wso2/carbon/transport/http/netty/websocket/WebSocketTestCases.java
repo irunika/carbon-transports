@@ -19,7 +19,6 @@
 
 package org.wso2.carbon.transport.http.netty.websocket;
 
-import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -46,9 +45,9 @@ import static org.testng.AssertJUnit.assertTrue;
 /**
  * Test class for WebSocket Upgrade
  */
-public class WebSocketBasicTestCases {
+public class WebSocketTestCases {
 
-    Logger logger = LoggerFactory.getLogger(WebSocketBasicTestCases.class);
+    Logger logger = LoggerFactory.getLogger(WebSocketTestCases.class);
 
     private final String host = "localhost";
     private final int port = 8490;
