@@ -55,6 +55,7 @@ public class WebSocketTestCases {
     private final String subprotocolXML = "xml";
     private final String subprotocolUnknown = "unknown";
     private final boolean allowExtensions = true;
+    private final int threadSleepTimeInMilliSeconds = 100;
 
     private String url = System.getProperty("url", String.format("ws://%s:%d/%s",
                                                                  host, port, "test"));
@@ -86,7 +87,7 @@ public class WebSocketTestCases {
         primaryClient.handhshake(null, true);
         String textSent = "test";
         primaryClient.sendText(textSent);
-        Thread.sleep(3000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         String textReceived = primaryClient.getTextReceived();
         assertEquals("Not received the same text.", textReceived, textSent);
         logger.info("pushing and receiving text data from server completed.");
@@ -99,7 +100,7 @@ public class WebSocketTestCases {
         byte[] bytes = {1, 2, 3, 4, 5};
         ByteBuffer bufferSent = ByteBuffer.wrap(bytes);
         primaryClient.sendBinary(bufferSent);
-        Thread.sleep(3000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         ByteBuffer bufferReceived = primaryClient.getBufferReceived();
         assertTrue("Buffer capacity is not the same.",
                    bufferSent.capacity() == bufferReceived.capacity());
@@ -116,9 +117,9 @@ public class WebSocketTestCases {
     @Test(description = "Test successful connection using two WebSocket clients.")
     public void testClientConnected() throws InterruptedException, SSLException, URISyntaxException {
         primaryClient.handhshake(null, true);
-        Thread.sleep(2000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         secondaryClient.handhshake(null, true);
-        Thread.sleep(5000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         String textReceived = primaryClient.getTextReceived();
         logger.info("Received text : " + textReceived);
         assertEquals("New Client was not connected.",
@@ -136,11 +137,11 @@ public class WebSocketTestCases {
     @Test(description = "Test successful disconnection using two WebSocket clients.")
     public void testClientCloseConnection() throws InterruptedException, URISyntaxException, SSLException {
         primaryClient.handhshake(null, true);
-        Thread.sleep(2000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         secondaryClient.handhshake(null, true);
-        Thread.sleep(3000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         secondaryClient.shutDown();
-        Thread.sleep(3000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         String textReceived = primaryClient.getTextReceived();
         logger.info("Received Text : " + textReceived);
         assertEquals("Connection close is unsuccessful.", textReceived, WebSocketTestConstants.CLIENT_LEFT);
@@ -155,7 +156,7 @@ public class WebSocketTestCases {
         byte[] bytes = {6, 7, 8, 9, 10, 11};
         ByteBuffer bufferSent = ByteBuffer.wrap(bytes);
         primaryClient.sendPong(bufferSent);
-        Thread.sleep(3000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         ByteBuffer bufferReceived = primaryClient.getBufferReceived();
         assertEquals("Didn't receive the correct pong.", bufferReceived, bufferSent);
         logger.info("Receiving a pong message is completed.");
@@ -165,11 +166,11 @@ public class WebSocketTestCases {
     @Test(description = "Test correct WebSocket subprotocol negotiation.")
     public void testSubprotocolNegotiation() throws InterruptedException, SSLException, URISyntaxException {
         String textSent = "subprotocol";
-        Assert.assertTrue(primaryClient.handhshake(subprotocolJson, allowExtensions));
-        Thread.sleep(2000);
+        Assert.assertTrue(primaryClient.handhshake(subprotocolJson + ", " + subprotocolXML, allowExtensions));
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         Assert.assertTrue(secondaryClient.handhshake(subprotocolXML, allowExtensions));
         secondaryClient.sendText(textSent);
-        Thread.sleep(2000);
+        Thread.sleep(threadSleepTimeInMilliSeconds);
         String textReceived = secondaryClient.getTextReceived();
         Assert.assertEquals(textReceived, textSent);
         primaryClient.shutDown();

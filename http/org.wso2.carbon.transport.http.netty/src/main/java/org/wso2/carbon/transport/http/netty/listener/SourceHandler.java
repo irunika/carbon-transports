@@ -162,9 +162,22 @@ public class SourceHandler extends ChannelInboundHandlerAdapter {
      */
     private void handleWebSocketHandshake(HttpRequest httpRequest) throws ProtocolException {
         try {
+
+            if (log.isDebugEnabled()) {
+                log.debug("Configurations for WebSocket -> \n" +
+                                  "Supported Subprotocols : " +
+                                  listenerConfiguration.getWebsocketSubprotocols() + "\n" +
+                                  "Allow extensions : " + listenerConfiguration.isWebsocketAllowExtensions() + "\n" +
+                                  "Max frame payload length : " +
+                                  listenerConfiguration.getMaxWebSocketFramePayloadLength() + "\n" +
+                                  "Event executor group max thread size : " +
+                                  PoolConfiguration.getInstance().getEventGroupExecutorThreads() + "\n");
+            }
+
             WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
                     getWebSocketURL(httpRequest), listenerConfiguration.getWebsocketSubprotocols(),
-                    listenerConfiguration.isWebsocketAllowExtensions());
+                    listenerConfiguration.isWebsocketAllowExtensions(),
+                    listenerConfiguration.getMaxWebSocketFramePayloadLength());
             handshaker = wsFactory.newHandshaker(httpRequest);
             handshaker.handshake(ctx.channel(), httpRequest);
             boolean isSecuredConnection = false;

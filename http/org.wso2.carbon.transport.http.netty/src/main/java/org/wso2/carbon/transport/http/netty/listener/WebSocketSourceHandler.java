@@ -201,9 +201,8 @@ public class WebSocketSourceHandler extends SourceHandler {
     Find the subprotocol which the handshaker negotiated.
      */
     private String getSubprotocol(List<Header> headers) {
-        String subprotocolHeaderKey = "sec-websocket-protocol";
         for (Header header: headers) {
-            if (subprotocolHeaderKey.equals(header.getName())) {
+            if (Constants.WEBSOCKET_SUBPROTOCOL_HEADER.equals(header.getName())) {
                 return header.getValue();
             }
         }

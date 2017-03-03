@@ -83,6 +83,9 @@ transportProperties:
  -
   name: "server.bootstrap.socket.backlog"
   value: 100
+ -
+  name: "event.group.executor.thread.size"
+  value: 8
 
 listenerConfigurations:
  -
@@ -91,6 +94,7 @@ listenerConfigurations:
   port: 8490
   websocketSubprotocols: "xml,json"
   websocketAllowExtensions: true
+  maxWebSocketFramePayloadLength: 100
 
 senderConfigurations:
  -

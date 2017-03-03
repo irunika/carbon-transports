@@ -83,6 +83,9 @@ public class ListenerConfiguration {
     @XmlAttribute
     private boolean websocketAllowExtensions = true;
 
+    @XmlAttribute
+    private int maxWebSocketFramePayloadLength = 65536;
+
     @XmlElementWrapper(name = "parameters")
     @XmlElement(name = "parameter")
     private List<Parameter> parameters = getDefaultParameters();
@@ -176,6 +179,23 @@ public class ListenerConfiguration {
         this.parameters = parameters;
     }
 
+    public SSLConfig getSslConfig() {
+        if (scheme == null || !scheme.equalsIgnoreCase("https")) {
+            return null;
+        }
+
+        return Util.getSSLConfigForListener(certPass, keyStorePass, keyStoreFile, trustStoreFile, trustStorePass,
+                parameters);
+    }
+
+    private List<Parameter> getDefaultParameters() {
+        List<Parameter> defaultParams = new ArrayList<>();
+        return defaultParams;
+
+    }
+
+    //WebSocket Related Configurations
+
     public String getWebsocketSubprotocols() {
         return websocketSubprotocols;
     }
@@ -192,18 +212,11 @@ public class ListenerConfiguration {
         this.websocketAllowExtensions = websocketAllowExtensions;
     }
 
-    public SSLConfig getSslConfig() {
-        if (scheme == null || !scheme.equalsIgnoreCase("https")) {
-            return null;
-        }
-
-        return Util.getSSLConfigForListener(certPass, keyStorePass, keyStoreFile, trustStoreFile, trustStorePass,
-                parameters);
+    public int getMaxWebSocketFramePayloadLength() {
+        return maxWebSocketFramePayloadLength;
     }
 
-    private List<Parameter> getDefaultParameters() {
-        List<Parameter> defaultParams = new ArrayList<>();
-        return defaultParams;
-
+    public void setMaxWebSocketFramePayloadLength(int maxWebSocketFramePayloadLength) {
+        this.maxWebSocketFramePayloadLength = maxWebSocketFramePayloadLength;
     }
 }
