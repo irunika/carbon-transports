@@ -43,7 +43,7 @@ public class WebSocketSessionImpl extends WebSocketSessionAdapter {
     private final String requestedUri;
     private final String sessionId;
     private boolean isOpen;
-    private String subprotocol;
+    private final String subprotocol;
 
     public WebSocketSessionImpl(ChannelHandlerContext ctx, boolean isSecure,
                                 String requestedUri, String sessionId, String subprotocol) {
