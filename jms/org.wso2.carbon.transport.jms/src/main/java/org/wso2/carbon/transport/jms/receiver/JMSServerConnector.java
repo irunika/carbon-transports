@@ -234,7 +234,7 @@ public class JMSServerConnector extends ServerConnector {
             useReceiver = Boolean.parseBoolean(useReceiverParam);
         }
 
-        String concurrentConsumers = map.get(JMSConstants.CONCURRENT_CONSUMERS);
+        String concurrentConsumers = super.properties.get(JMSConstants.CONCURRENT_CONSUMERS);
 
         if (concurrentConsumers != null) {
             try {
@@ -260,7 +260,7 @@ public class JMSServerConnector extends ServerConnector {
             }
         }
 
-        String connectionFacNatureParam = map.get(JMSConstants.CONNECTION_FACTORY_NATURE);
+        String connectionFacNatureParam = super.properties.get(JMSConstants.CONNECTION_FACTORY_NATURE);
 
         if (connectionFacNatureParam != null) {
             connectionFactoryNature = connectionFacNatureParam;
