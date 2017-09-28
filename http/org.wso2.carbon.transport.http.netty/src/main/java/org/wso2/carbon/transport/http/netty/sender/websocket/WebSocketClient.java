@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.carbon.transport.http.netty.contract.websocket.HandshakeFuture;
 import org.wso2.carbon.transport.http.netty.contract.websocket.WebSocketConnectorListener;
+import org.wso2.carbon.transport.http.netty.contractimpl.websocket.HandshakeFutureImpl;
 import org.wso2.carbon.transport.http.netty.internal.websocket.WebSocketSessionImpl;
 
 import java.net.URI;
@@ -91,13 +92,13 @@ public class WebSocketClient {
     /**
      * Handle the handshake with the server.
      *
-     * @param handshakeFuture Handshake future for the connecting client.
      * @throws URISyntaxException throws if there is an error in the URI syntax.
      * @throws InterruptedException throws if the connecting the server is interrupted.
      * @throws SSLException throws if SSL exception occurred during protocol negotiation.
      */
-    public void handshake(HandshakeFuture handshakeFuture)
-            throws InterruptedException, URISyntaxException, SSLException {
+    public HandshakeFuture handshake() {
+        HandshakeFutureImpl handshakeFuture = new HandshakeFutureImpl();
+        try {
         URI uri = new URI(url);
         String scheme = uri.getScheme() == null ? "ws" : uri.getScheme();
         final String host = uri.getHost() == null ? "127.0.0.1" : uri.getHost();
@@ -144,7 +145,6 @@ public class WebSocketClient {
         handler = new WebSocketTargetHandler(websocketHandshaker, ssl, url, target, connectorListener);
 
 
-        try {
             Bootstrap b = new Bootstrap();
             b.group(group)
                     .channel(NioSocketChannel.class)
@@ -167,19 +167,27 @@ public class WebSocketClient {
                     });
 
             b.connect(uri.getHost(), port).sync();
-            handler.handshakeFuture().addListener(new ChannelFutureListener() {
+            ChannelFuture future = handler.handshakeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) {
-                    WebSocketSessionImpl session = (WebSocketSessionImpl) handler.getChannelSession();
-                    String actualSubProtocol = websocketHandshaker.actualSubprotocol();
-                    handler.setActualSubProtocol(actualSubProtocol);
-                    session.setNegotiatedSubProtocol(actualSubProtocol);
-                    session.setIsOpen(true);
-                    handshakeFuture.notifySuccess(session);
+                    Throwable cause = future.cause();
+                    if (future.isSuccess() && cause == null) {
+                        WebSocketSessionImpl session = (WebSocketSessionImpl) handler.getChannelSession();
+                        String actualSubProtocol = websocketHandshaker.actualSubprotocol();
+                        handler.setActualSubProtocol(actualSubProtocol);
+                        session.setNegotiatedSubProtocol(actualSubProtocol);
+                        session.setIsOpen(true);
+                        handshakeFuture.notifySuccess(session);
+                    } else {
+                        handshakeFuture.notifyError(cause);
+                    }
                 }
-            }).sync();
+            });
+            handshakeFuture.setChannelFuture(future);
+            return handshakeFuture;
         } catch (Throwable t) {
             handshakeFuture.notifyError(t);
+            return handshakeFuture;
         }
     }
 }

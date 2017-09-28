@@ -68,54 +68,30 @@ public class WebSocketTestCase {
 
     protected void assertWebSocketClientBinaryMessage(WebSocketTestClient client, ByteBuffer bufferExpected)
             throws InterruptedException {
+        ByteBuffer bufferReceived = null;
         for (int j = 0; j < messageDeliveryCountDown; j++) {
             Thread.sleep(threadSleepTime);
-            ByteBuffer bufferReceived = client.getBufferReceived();
+            bufferReceived = client.getBufferReceived();
             if (bufferReceived != null) {
-                 if (bufferReceived.capacity() == bufferExpected.capacity()) {
-                     while (bufferReceived.hasRemaining()) {
-                         byte receivedByte = bufferReceived.get();
-                         byte expectedByte = bufferExpected.get();
-                         if (receivedByte != expectedByte) {
-                             Assert.assertTrue(false);
-                             return;
-                         }
-                     }
-                     Assert.assertTrue(true);
-                     return;
-                 } else {
-                     Assert.assertTrue(false);
-                     return;
-                 }
+                Assert.assertEquals(bufferReceived, bufferExpected);
+                return;
             }
         }
-        Assert.assertTrue(false);
+        Assert.assertEquals(bufferReceived, bufferExpected);
     }
 
     protected void assertWebSocketClientBinaryMessage(WebSocketTestClientConnectorListener clientConnectorListener,
                                                       ByteBuffer bufferExpected) throws InterruptedException {
+        ByteBuffer bufferReceived = null;
         for (int j = 0; j < messageDeliveryCountDown; j++) {
             Thread.sleep(threadSleepTime);
-            ByteBuffer bufferReceived = clientConnectorListener.getReceivedByteBufferToClient();
+            bufferReceived = clientConnectorListener.getReceivedByteBufferToClient();
             if (bufferReceived != null) {
-                if (bufferReceived.capacity() == bufferExpected.capacity()) {
-                    while (bufferReceived.hasRemaining()) {
-                        byte receivedByte = bufferReceived.get();
-                        byte expectedByte = bufferExpected.get();
-                        if (receivedByte != expectedByte) {
-                            Assert.assertTrue(false);
-                            return;
-                        }
-                    }
-                    Assert.assertTrue(true);
-                    return;
-                } else {
-                    Assert.assertTrue(false);
-                    return;
-                }
+                Assert.assertEquals(bufferReceived, bufferExpected);
+                return;
             }
         }
-        Assert.assertTrue(false);
+        Assert.assertEquals(bufferReceived, bufferExpected);
     }
 
     protected void assertWebSocketClientPongMessage(WebSocketTestClientConnectorListener clientConnectorListener)

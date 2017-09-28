@@ -30,6 +30,7 @@ import org.wso2.carbon.transport.http.netty.contract.websocket.WebSocketInitMess
 import org.wso2.carbon.transport.http.netty.contract.websocket.WebSocketTextMessage;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * WebSocket test class for WebSocket Connector Listener.
@@ -55,13 +56,13 @@ public class WebSocketTestClientConnectorListener implements WebSocketConnectorL
 
     @Override
     public void onMessage(WebSocketBinaryMessage binaryMessage) {
-        receivedByteBufferToClient = binaryMessage.getByteBuffer();
+        this.receivedByteBufferToClient = binaryMessage.getByteBuffer();
     }
 
     @Override
     public void onMessage(WebSocketControlMessage controlMessage) {
         if (controlMessage.getControlSignal() == WebSocketControlSignal.PONG) {
-            isPongReceived = true;
+            this.isPongReceived = true;
         }
     }
 
@@ -77,7 +78,7 @@ public class WebSocketTestClientConnectorListener implements WebSocketConnectorL
 
     @Override
     public void onIdleTimeout(WebSocketControlMessage controlMessage) {
-        isIdleTimeout = true;
+        this.isIdleTimeout = true;
     }
 
     /**

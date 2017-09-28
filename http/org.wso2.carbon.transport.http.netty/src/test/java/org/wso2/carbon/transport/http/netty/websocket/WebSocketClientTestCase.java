@@ -51,6 +51,7 @@ public class WebSocketClientTestCase extends WebSocketTestCase {
     private HttpWsConnectorFactoryImpl httpConnectorFactory = new HttpWsConnectorFactoryImpl();
     private final String url = String.format("ws://%s:%d/%s", "localhost",
                                              TestUtil.TEST_REMOTE_WS_SERVER_PORT, "websocket");
+    private final int latchWaitTime = 10;
     private final int threadSleepTime = 100;
     private WsClientConnectorConfig configuration = new WsClientConnectorConfig(url);
     private WebSocketClientConnector clientConnector;
@@ -86,7 +87,7 @@ public class WebSocketClientTestCase extends WebSocketTestCase {
                 log.error(t.getMessage());
                 Assert.assertTrue(false, t.getMessage());
             }
-        });
+        }).sync();
     }
 
     @Test(priority = 2, description = "Test binary message sending and receiving.")
@@ -113,7 +114,7 @@ public class WebSocketClientTestCase extends WebSocketTestCase {
                 log.error(t.getMessage());
                 Assert.assertTrue(false, t.getMessage());
             }
-        });
+        }).sync();
     }
 
     @Test(priority = 3, description = "Test ping pong messaging.")
@@ -127,7 +128,6 @@ public class WebSocketClientTestCase extends WebSocketTestCase {
                     byte[] bytes = {1, 2, 3, 4, 5};
                     ByteBuffer buffer = ByteBuffer.wrap(bytes);
                     session.getBasicRemote().sendPing(buffer);
-                    Thread.sleep(threadSleepTime);
                     assertWebSocketClientPongMessage(connectorListener);
                     shutDownClient(session);
                 } catch (IOException | InterruptedException e) {
@@ -141,7 +141,7 @@ public class WebSocketClientTestCase extends WebSocketTestCase {
                 log.error(t.getMessage());
                 Assert.assertTrue(false, t.getMessage());
             }
-        });
+        }).sync();
     }
 
     @Test(priority = 4, description = "Test multiple clients handling, sending and receiving text messages for them.")
@@ -168,7 +168,7 @@ public class WebSocketClientTestCase extends WebSocketTestCase {
                 log.error(t.getMessage());
                 Assert.assertTrue(false, t.getMessage());
             }
-        });
+        }).sync();
 
         WebSocketTestClientConnectorListener connectorListener2 = new WebSocketTestClientConnectorListener();
         HandshakeFuture handshakeFuture2 = handshake(connectorListener2);
@@ -194,7 +194,51 @@ public class WebSocketClientTestCase extends WebSocketTestCase {
                 log.error(t.getMessage());
                 Assert.assertTrue(false, t.getMessage());
             }
-        });
+        }).sync();
+    }
+
+    @Test(priority = 6, description = "Test the sub protocol negotiation with the remote server")
+    public void testSubProtocolNegotiation() throws InterruptedException {
+
+        // Try with a matching sub protocol.
+        String[] subProtocolsSuccess = {"xmlx", "json"};
+        configuration.setSubProtocols(subProtocolsSuccess);
+        clientConnector = httpConnectorFactory.createWsClientConnector(configuration);
+        WebSocketTestClientConnectorListener connectorListenerSuccess =
+                new WebSocketTestClientConnectorListener();
+        HandshakeFuture handshakeFutureSuccess = handshake(connectorListenerSuccess);
+        handshakeFutureSuccess.setHandshakeListener(new HandshakeListener() {
+            @Override
+            public void onSuccess(Session session) {
+                Assert.assertEquals(session.getNegotiatedSubprotocol(), "json");
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                log.error(t.getMessage());
+                Assert.assertTrue(false, "Handshake failed: " + t.getMessage());
+            }
+        }).sync();
+
+        // Try with unmatching sub protocol
+        String[] subProtocolsFail = {"xmlx", "jsonx"};
+        configuration.setSubProtocols(subProtocolsFail);
+        clientConnector = httpConnectorFactory.createWsClientConnector(configuration);
+        WebSocketTestClientConnectorListener connectorListenerFail =
+                new WebSocketTestClientConnectorListener();
+        HandshakeFuture handshakeFutureFail = handshake(connectorListenerFail);
+        handshakeFutureFail.setHandshakeListener(new HandshakeListener() {
+            @Override
+            public void onSuccess(Session session) {
+                Assert.assertFalse(true, "Should not negotiate");
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                log.error(t.getMessage());
+                Assert.assertTrue(true, "Handshake failed: " + t.getMessage());
+            }
+        }).sync();
     }
 
     @Test(priority = 5, description = "Test the idle timeout for WebSocket")
@@ -221,49 +265,7 @@ public class WebSocketClientTestCase extends WebSocketTestCase {
                 log.error(t.getMessage());
                 Assert.assertTrue(false, t.getMessage());
             }
-        });
-    }
-
-    @Test(priority = 6, description = "Test the sub protocol negotiation with the remote server")
-    public void testSubProtocolNegotiation()  {
-
-        // Try with a matching sub protocol.
-        String[] subProtocolsSuccess = {"xmlx", "json"};
-        configuration.setSubProtocols(subProtocolsSuccess);
-        clientConnector = httpConnectorFactory.createWsClientConnector(configuration);
-        WebSocketTestClientConnectorListener connectorListenerSuccess = new WebSocketTestClientConnectorListener();
-        HandshakeFuture handshakeFutureSuccess = handshake(connectorListenerSuccess);
-        handshakeFutureSuccess.setHandshakeListener(new HandshakeListener() {
-            @Override
-            public void onSuccess(Session session) {
-                Assert.assertEquals(session.getNegotiatedSubprotocol(), "json");
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                log.error(t.getMessage());
-                Assert.assertTrue(false, "Handshake failed: " + t.getMessage());
-            }
-        });
-
-        // Try with unmatching sub protocol
-        String[] subProtocolsFail = {"xmlx", "jsonx"};
-        configuration.setSubProtocols(subProtocolsFail);
-        clientConnector = httpConnectorFactory.createWsClientConnector(configuration);
-        WebSocketTestClientConnectorListener connectorListenerFail = new WebSocketTestClientConnectorListener();
-        HandshakeFuture handshakeFutureFail = handshake(connectorListenerFail);
-        handshakeFutureFail.setHandshakeListener(new HandshakeListener() {
-            @Override
-            public void onSuccess(Session session) {
-                Assert.assertFalse(true, "Should not negotiate");
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                log.error(t.getMessage());
-                Assert.assertTrue(true, "Handshake failed: " + t.getMessage());
-            }
-        });
+        }).sync();
     }
 
     @AfterClass
