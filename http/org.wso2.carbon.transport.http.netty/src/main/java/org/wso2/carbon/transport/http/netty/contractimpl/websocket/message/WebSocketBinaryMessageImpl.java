@@ -19,6 +19,7 @@
 
 package org.wso2.carbon.transport.http.netty.contractimpl.websocket.message;
 
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import org.wso2.carbon.transport.http.netty.contract.websocket.WebSocketBinaryMessage;
 import org.wso2.carbon.transport.http.netty.contractimpl.websocket.WebSocketMessageImpl;
 
@@ -29,21 +30,20 @@ import java.nio.ByteBuffer;
  */
 public class WebSocketBinaryMessageImpl extends WebSocketMessageImpl implements WebSocketBinaryMessage {
 
-    private final ByteBuffer buffer;
-    private final boolean isFinalFragment;
+    private final BinaryWebSocketFrame binaryWebSocketFrame;
 
-    public WebSocketBinaryMessageImpl(ByteBuffer buffer, boolean isFinalFragment) {
-        this.buffer = buffer;
-        this.isFinalFragment = isFinalFragment;
+    public WebSocketBinaryMessageImpl(BinaryWebSocketFrame binaryWebSocketFrame) {
+        this.binaryWebSocketFrame = binaryWebSocketFrame;
     }
 
     @Override
     public ByteBuffer getByteBuffer() {
-        return buffer;
+        return binaryWebSocketFrame.content().nioBuffer();
     }
 
     @Override
     public byte[] getByteArray() {
+        ByteBuffer buffer = binaryWebSocketFrame.content().nioBuffer();
         byte[] bytes;
         if (buffer.hasArray()) {
             bytes = buffer.array();
@@ -59,6 +59,11 @@ public class WebSocketBinaryMessageImpl extends WebSocketMessageImpl implements 
 
     @Override
     public boolean isFinalFragment() {
-        return isFinalFragment;
+        return binaryWebSocketFrame.isFinalFragment();
+    }
+
+    @Override
+    public void release() {
+        binaryWebSocketFrame.release();
     }
 }

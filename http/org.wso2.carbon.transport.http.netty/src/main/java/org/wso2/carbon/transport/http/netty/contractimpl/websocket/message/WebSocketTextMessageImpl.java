@@ -50,4 +50,9 @@ public class WebSocketTextMessageImpl extends WebSocketMessageImpl implements We
     public boolean isFinalFragment() {
         return isFinalFragment;
     }
+
+    @Override
+    public void release() {
+
+    }
 }

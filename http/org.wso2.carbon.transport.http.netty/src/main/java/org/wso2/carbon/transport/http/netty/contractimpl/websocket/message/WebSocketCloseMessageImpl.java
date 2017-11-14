@@ -19,6 +19,7 @@
 
 package org.wso2.carbon.transport.http.netty.contractimpl.websocket.message;
 
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import org.wso2.carbon.transport.http.netty.contract.websocket.WebSocketCloseMessage;
 import org.wso2.carbon.transport.http.netty.contractimpl.websocket.WebSocketMessageImpl;
 
@@ -27,21 +28,24 @@ import org.wso2.carbon.transport.http.netty.contractimpl.websocket.WebSocketMess
  */
 public class WebSocketCloseMessageImpl extends WebSocketMessageImpl implements WebSocketCloseMessage {
 
-    private final int closeCode;
-    private final String closeReason;
+    private final CloseWebSocketFrame closeWebSocketFrame;
 
-    public WebSocketCloseMessageImpl(int closeCode, String closeReason) {
-        this.closeCode = closeCode;
-        this.closeReason = closeReason;
+    public WebSocketCloseMessageImpl(CloseWebSocketFrame closeWebSocketFrame) {
+        this.closeWebSocketFrame = closeWebSocketFrame;
     }
 
     @Override
     public int getCloseCode() {
-        return closeCode;
+        return closeWebSocketFrame.statusCode();
     }
 
     @Override
     public String getCloseReason() {
-        return closeReason;
+        return closeWebSocketFrame.reasonText();
+    }
+
+    @Override
+    public void release() {
+        closeWebSocketFrame.release();
     }
 }

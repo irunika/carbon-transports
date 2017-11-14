@@ -179,4 +179,9 @@ public class WebSocketInitMessageImpl extends WebSocketMessageImpl implements We
         subProtocolsStr = subProtocolsStr.substring(0, subProtocolsStr.length() - 1);
         return subProtocolsStr;
     }
+
+    @Override
+    public void release() {
+        // Do nothing
+    }
 }

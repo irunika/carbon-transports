@@ -19,6 +19,7 @@
 
 package org.wso2.carbon.transport.http.netty.contractimpl.websocket.message;
 
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.wso2.carbon.transport.http.netty.contract.websocket.WebSocketControlMessage;
 import org.wso2.carbon.transport.http.netty.contract.websocket.WebSocketControlSignal;
 import org.wso2.carbon.transport.http.netty.contractimpl.websocket.WebSocketMessageImpl;
@@ -30,12 +31,12 @@ import java.nio.ByteBuffer;
  */
 public class WebSocketControlMessageImpl extends WebSocketMessageImpl implements WebSocketControlMessage {
 
+    private final WebSocketFrame webSocketFrame;
     private final WebSocketControlSignal controlSignal;
-    private final ByteBuffer buffer;
 
-    public WebSocketControlMessageImpl(WebSocketControlSignal controlSignal, ByteBuffer buffer) {
+    public WebSocketControlMessageImpl(WebSocketControlSignal controlSignal, WebSocketFrame webSocketFrame) {
+        this.webSocketFrame = webSocketFrame;
         this.controlSignal = controlSignal;
-        this.buffer = buffer;
     }
 
     @Override
@@ -45,6 +46,10 @@ public class WebSocketControlMessageImpl extends WebSocketMessageImpl implements
 
     @Override
     public byte[] getByteArray() {
+        if (WebSocketControlSignal.IDLE_TIMEOUT.equals(controlSignal)) {
+            return null;
+        }
+        ByteBuffer buffer = webSocketFrame.content().nioBuffer();
         byte[] bytes;
         if (buffer.hasArray()) {
             bytes = buffer.array();
@@ -60,6 +65,16 @@ public class WebSocketControlMessageImpl extends WebSocketMessageImpl implements
 
     @Override
     public ByteBuffer getPayload() {
-        return buffer;
+        if (WebSocketControlSignal.IDLE_TIMEOUT.equals(controlSignal)) {
+            return null;
+        }
+        return webSocketFrame.content().nioBuffer();
+    }
+
+    @Override
+    public void release() {
+        if (!WebSocketControlSignal.IDLE_TIMEOUT.equals(controlSignal)) {
+            webSocketFrame.release();
+        }
     }
 }

@@ -108,4 +108,9 @@ public interface WebSocketMessage {
      * @return the session ID.
      */
     String getSessionID();
+
+    /**
+     * Release the byte buffer associated with the message.
+     */
+    void release();
 }

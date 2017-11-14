@@ -28,7 +28,7 @@ import javax.websocket.Session;
 /**
  * Implementation of {@link WebSocketMessage}.
  */
-public class WebSocketMessageImpl implements WebSocketMessage {
+public abstract class WebSocketMessageImpl implements WebSocketMessage {
 
     private final Map<String, Object> properties = new HashMap<>();
     protected String subProtocol;
